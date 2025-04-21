@@ -194,10 +194,22 @@ fn main() -> Result<()> {
     CUSTOM_FFM.store(opts.focus_follows_mouse, Ordering::SeqCst);
 
     let process_id = WindowsApi::current_process_id();
-    WindowsApi::allow_set_foreground_window(process_id)?;
-    WindowsApi::set_process_dpi_awareness_context()?;
+    if let Err(err) = WindowsApi::allow_set_foreground_window(process_id) {
+        tracing::error!("{err} allow_set_foreground_window");
+        return Err(err);
+    }
+    if let Err(err) = WindowsApi::set_process_dpi_awareness_context() {
+        tracing::error!("{err} set_process_dpi_awareness_context");
+        return Err(err);
+    }
 
-    let session_id = WindowsApi::process_id_to_session_id()?;
+    let session_id = match WindowsApi::process_id_to_session_id() {
+        Ok(id) => id,
+        Err(err) => {
+            tracing::error!("{err} process_id_to_session_id");
+            return Err(err);
+        }
+    };
     SESSION_ID.store(session_id, Ordering::SeqCst);
 
     let mut system = sysinfo::System::new();
@@ -224,7 +236,10 @@ fn main() -> Result<()> {
     // File logging worker guard has to have an assignment in the main fn to work
     let (_guard, _color_guard) = setup(opts.log_level)?;
 
-    WindowsApi::foreground_lock_timeout()?;
+    if let Err(err) = WindowsApi::foreground_lock_timeout() {
+        tracing::error!("{err} foreground_lock_timeout");
+        return Err(err);
+    }
 
     winevent_listener::start();
 
@@ -340,8 +355,18 @@ fn main() -> Result<()> {
     wm.lock().restore_all_windows(false)?;
     AnimationEngine::wait_for_all_animations();
 
-    if WindowsApi::focus_follows_mouse()? {
-        WindowsApi::disable_focus_follows_mouse()?;
+    let focusfollowsmouse = match WindowsApi::focus_follows_mouse() {
+        Ok(ffm) => ffm,
+        Err(err) => {
+            tracing::error!("{err} focus_follows_mouse");
+            return Err(err);
+        }
+    };
+    if focusfollowsmouse {
+        if let Err(err) = WindowsApi::disable_focus_follows_mouse() {
+            tracing::error!("{err} disable_focus_follows_mouse");
+            return Err(err);
+        }
     }
 
     let sockets = komorebi::SUBSCRIPTION_SOCKETS.lock();
