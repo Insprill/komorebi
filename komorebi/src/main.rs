@@ -193,20 +193,24 @@ fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
     CUSTOM_FFM.store(opts.focus_follows_mouse, Ordering::SeqCst);
 
+    println!("calling current_process_id");
     let process_id = WindowsApi::current_process_id();
+    println!("calling allow_set_foreground_window");
     if let Err(err) = WindowsApi::allow_set_foreground_window(process_id) {
-        tracing::error!("{err} allow_set_foreground_window");
+        println!("{err} allow_set_foreground_window");
         return Err(err);
     }
+    println!("calling set_process_dpi_awareness_context");
     if let Err(err) = WindowsApi::set_process_dpi_awareness_context() {
-        tracing::error!("{err} set_process_dpi_awareness_context");
+        println!("{err} set_process_dpi_awareness_context");
         return Err(err);
     }
 
+    println!("calling process_id_to_session_id");
     let session_id = match WindowsApi::process_id_to_session_id() {
         Ok(id) => id,
         Err(err) => {
-            tracing::error!("{err} process_id_to_session_id");
+            println!("{err} process_id_to_session_id");
             return Err(err);
         }
     };
@@ -236,6 +240,7 @@ fn main() -> Result<()> {
     // File logging worker guard has to have an assignment in the main fn to work
     let (_guard, _color_guard) = setup(opts.log_level)?;
 
+    println!("calling foreground_lock_timeout");
     if let Err(err) = WindowsApi::foreground_lock_timeout() {
         tracing::error!("{err} foreground_lock_timeout");
         return Err(err);
@@ -355,16 +360,18 @@ fn main() -> Result<()> {
     wm.lock().restore_all_windows(false)?;
     AnimationEngine::wait_for_all_animations();
 
+    println!("calling focus_follows_mouse");
     let focusfollowsmouse = match WindowsApi::focus_follows_mouse() {
         Ok(ffm) => ffm,
         Err(err) => {
-            tracing::error!("{err} focus_follows_mouse");
+            println!("{err} focus_follows_mouse");
             return Err(err);
         }
     };
     if focusfollowsmouse {
+        println!("calling disable_focus_follows_mouse");
         if let Err(err) = WindowsApi::disable_focus_follows_mouse() {
-            tracing::error!("{err} disable_focus_follows_mouse");
+            println!("{err} disable_focus_follows_mouse");
             return Err(err);
         }
     }
