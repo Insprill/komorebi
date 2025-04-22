@@ -195,11 +195,44 @@ fn main() -> Result<()> {
 
     println!("calling current_process_id");
     let process_id = WindowsApi::current_process_id();
-    println!("calling allow_set_foreground_window");
-    if let Err(err) = WindowsApi::allow_set_foreground_window(process_id) {
-        println!("{err} allow_set_foreground_window");
-        return Err(err);
+
+    let mut succeeded = false;
+    let mut i = 0;
+    while i < 10 {
+        println!(
+            "calling allow_set_foreground_window with pid {} ({}x)",
+            process_id, i
+        );
+        if let Err(err) = WindowsApi::allow_set_foreground_window(process_id) {
+            println!("{err} allow_set_foreground_window");
+        } else {
+            println!("allow_set_foreground_window succeeded on try {}", i);
+            succeeded = true;
+            break;
+        }
+        i = i + 1;
     }
+
+    if (!succeeded) {
+        println!("calling allow_set_foreground_window but waiting 0.5 sec between calls");
+        i = 0;
+        while i < 10 {
+            println!(
+                "calling allow_set_foreground_window with pid {} ({}x)",
+                process_id, i
+            );
+            if let Err(err) = WindowsApi::allow_set_foreground_window(process_id) {
+                println!("{err} allow_set_foreground_window");
+                std::thread::sleep_ms(500);
+            } else {
+                println!("allow_set_foreground_window succeeded on try {}", i);
+                succeeded = true;
+                break;
+            }
+            i = i + 1;
+        }
+    }
+
     println!("calling set_process_dpi_awareness_context");
     if let Err(err) = WindowsApi::set_process_dpi_awareness_context() {
         println!("{err} set_process_dpi_awareness_context");
