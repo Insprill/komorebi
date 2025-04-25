@@ -135,7 +135,7 @@ fn detect_deadlocks() {
     // Create a background thread which checks for deadlocks every 10s
     std::thread::spawn(move || loop {
         tracing::info!("running deadlock detector");
-        std::thread::sleep(Duration::from_secs(5));
+        std::thread::sleep(std::time::Duration::from_secs(5));
         let deadlocks = deadlock::check_deadlock();
         if deadlocks.is_empty() {
             continue;
