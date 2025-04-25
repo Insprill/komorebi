@@ -223,10 +223,10 @@ fn main() -> Result<()> {
             );
             if let Err(err) = WindowsApi::allow_set_foreground_window(process_id) {
                 println!("{err} allow_set_foreground_window");
-                std::thread::sleep_ms(500);
+                std::thread::sleep(Duration::from_millis(500))
             } else {
                 println!("allow_set_foreground_window succeeded on try {}", i);
-                succeeded = true;
+                // succeeded = true;
                 break;
             }
             i += 1;
