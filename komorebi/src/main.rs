@@ -210,10 +210,10 @@ fn main() -> Result<()> {
             succeeded = true;
             break;
         }
-        i = i + 1;
+        i += 1;
     }
 
-    if (!succeeded) {
+    if !succeeded {
         println!("calling allow_set_foreground_window but waiting 0.5 sec between calls");
         i = 0;
         while i < 10 {
@@ -229,7 +229,7 @@ fn main() -> Result<()> {
                 succeeded = true;
                 break;
             }
-            i = i + 1;
+            i += 1;
         }
     }
 
